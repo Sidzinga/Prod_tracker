@@ -1,0 +1,10 @@
+services:
+  tracker:
+    build: .
+    ports:
+      - "9876:9876"
+    volumes:
+      - ./data:/app/data
+      - ./exports:/app/exports
+    environment:
+      - PYTHONUNBUFFERED=1

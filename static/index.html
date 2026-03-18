@@ -1,0 +1,2992 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevTracker — Productivity Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #232734;
+            --surface3: #2c3040;
+            --border: #333847;
+            --text: #e4e6ef;
+            --text-dim: #8b8fa3;
+            --text-muted: #5c5f72;
+            --primary: #6c5ce7;
+            --primary-glow: rgba(108, 92, 231, .25);
+            --green: #00d68f;
+            --green-glow: rgba(0, 214, 143, .2);
+            --yellow: #ffcb2b;
+            --yellow-glow: rgba(255, 203, 43, .2);
+            --blue: #4fc3f7;
+            --blue-glow: rgba(79, 195, 247, .2);
+            --red: #ff6b6b;
+            --red-glow: rgba(255, 107, 107, .2);
+            --orange: #ffa726;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, .3);
+            --transition: .2s cubic-bezier(.4, 0, .2, 1);
+            --font: 'Inter', -apple-system, sans-serif;
+        }
+
+        [data-theme="light"] {
+            --bg: #f5f6fa;
+            --surface: #ffffff;
+            --surface2: #f0f1f5;
+            --surface3: #e8e9ed;
+            --border: #d1d4de;
+            --text: #1a1d27;
+            --text-dim: #5c5f72;
+            --text-muted: #8b8fa3;
+            --shadow: 0 4px 24px rgba(0, 0, 0, .08);
+            --primary-glow: rgba(108, 92, 231, .15);
+            --green-glow: rgba(0, 214, 143, .15);
+            --yellow-glow: rgba(255, 203, 43, .15);
+            --blue-glow: rgba(79, 195, 247, .15);
+            --red-glow: rgba(255, 107, 107, .15);
+        }
+
+        html {
+            font-size: 15px;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        button {
+            font-family: var(--font);
+            cursor: pointer;
+            border: none;
+        }
+
+        input,
+        select,
+        textarea {
+            font-family: var(--font);
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 28px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .app-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .app-logo .icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), #a78bfa);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .app-version {
+            font-size: .75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 28px 24px;
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+        }
+
+        @media (max-width:900px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title .material-icons-round {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .timer-card {
+            text-align: center;
+            padding: 32px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, var(--primary-glow) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity .5s;
+            pointer-events: none;
+        }
+
+        .timer-card.active::before {
+            opacity: 1;
+        }
+
+        .timer-card.on-break::before {
+            background: radial-gradient(circle at center, var(--blue-glow) 0%, transparent 70%);
+            opacity: 1;
+        }
+
+        .timer-card.paused::before {
+            background: radial-gradient(circle at center, var(--yellow-glow) 0%, transparent 70%);
+            opacity: 1;
+        }
+
+        .timer-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: .8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .timer-status-badge.idle {
+            background: var(--surface3);
+            color: var(--text-dim);
+        }
+
+        .timer-status-badge.active {
+            background: var(--green-glow);
+            color: var(--green);
+            border: 1px solid rgba(0, 214, 143, .3);
+        }
+
+        .timer-status-badge.paused {
+            background: var(--yellow-glow);
+            color: var(--yellow);
+            border: 1px solid rgba(255, 203, 43, .3);
+        }
+
+        .timer-status-badge.on-break {
+            background: var(--blue-glow);
+            color: var(--blue);
+            border: 1px solid rgba(79, 195, 247, .3);
+        }
+
+        .timer-status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .timer-status-badge.active .dot {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .3;
+            }
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+            font-variant-numeric: tabular-nums;
+            position: relative;
+        }
+
+        .timer-category {
+            font-size: .95rem;
+            color: var(--text-dim);
+            margin-bottom: 24px;
+        }
+
+        .timer-category strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .timer-meta {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 28px;
+        }
+
+        .timer-meta-item {
+            text-align: center;
+        }
+
+        .timer-meta-item .label {
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .timer-meta-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-meta-item .value.green {
+            color: var(--green);
+        }
+
+        .timer-meta-item .value.blue {
+            color: var(--blue);
+        }
+
+        .timer-meta-item .value.yellow {
+            color: var(--yellow);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-size: .85rem;
+            font-weight: 600;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn .material-icons-round {
+            font-size: 18px;
+        }
+
+        .btn:active {
+            transform: scale(.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #8b7cf7);
+            color: white;
+            box-shadow: 0 4px 16px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 24px rgba(108, 92, 231, .4);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--green), #00b87a);
+            color: white;
+            box-shadow: 0 4px 16px var(--green-glow);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 6px 24px rgba(0, 214, 143, .4);
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--yellow), #e6b800);
+            color: #1a1d27;
+            box-shadow: 0 4px 16px var(--yellow-glow);
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 6px 24px rgba(255, 203, 43, .4);
+            transform: translateY(-1px);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--blue), #29b6f6);
+            color: #1a1d27;
+            box-shadow: 0 4px 16px var(--blue-glow);
+        }
+
+        .btn-info:hover {
+            box-shadow: 0 6px 24px rgba(79, 195, 247, .4);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--red), #ef5350);
+            color: white;
+            box-shadow: 0 4px 16px var(--red-glow);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 6px 24px rgba(255, 107, 107, .4);
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            background: var(--surface3);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-lg {
+            padding: 14px 28px;
+            font-size: .95rem;
+            border-radius: var(--radius);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: .78rem;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .start-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: .9rem;
+            transition: border-color var(--transition);
+        }
+
+        .form-group select:focus,
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-group select option {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-box .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-box .stat-label {
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .session-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .session-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .session-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .session-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            transition: background var(--transition);
+        }
+
+        .session-item:hover {
+            background: var(--surface3);
+        }
+
+        .session-item .cat-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .session-item .session-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .session-item .session-cat {
+            font-size: .85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .session-item .session-subcat {
+            font-size: .75rem;
+            color: var(--text-muted);
+        }
+
+        .session-item .session-time {
+            font-size: .85rem;
+            font-weight: 600;
+            color: var(--green);
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
+        }
+
+        .session-item .session-clock {
+            font-size: .7rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .session-item .session-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .session-item .session-actions button {
+            background: transparent;
+            color: var(--text-muted);
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .session-item .session-actions button:hover {
+            background: var(--surface3);
+            color: var(--text);
+        }
+
+        .session-item .session-actions .material-icons-round {
+            font-size: 16px;
+        }
+
+        .category-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cat-bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cat-bar-item .cat-name {
+            font-size: .8rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            width: 100px;
+            text-align: right;
+            flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cat-bar-track {
+            flex: 1;
+            height: 8px;
+            background: var(--surface3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .cat-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--primary), #a78bfa);
+            transition: width .5s ease;
+        }
+
+        .cat-bar-item .cat-time {
+            font-size: .78rem;
+            font-weight: 600;
+            width: 55px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 2px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: transparent;
+            border-radius: 6px;
+            transition: all var(--transition);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-dim);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px var(--primary-glow);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* TOGGLE SWITCH STYLES */
+        .mode-toggle {
+            display: flex;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 12px;
+        }
+        
+        .mode-toggle button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all var(--transition);
+        }
+        
+        .mode-toggle button.active {
+            background: var(--surface3);
+            color: var(--text);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* CALENDAR STYLES */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-month-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding-bottom: 8px;
+        }
+
+        .calendar-day {
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 6px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            border-color: var(--primary);
+            background: var(--surface3);
+        }
+
+        .calendar-day.empty {
+            opacity: 0.5;
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .calendar-day.today {
+            border-color: var(--primary);
+            background: var(--primary-glow);
+        }
+
+        .calendar-date-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            align-self: flex-end;
+        }
+
+        .calendar-day.today .calendar-date-label {
+            color: var(--primary);
+        }
+
+        .calendar-session-chip {
+            font-size: 0.65rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-left: 2px solid var(--primary);
+        }
+
+        .calendar-session-chip .title {
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .calendar-session-chip .time {
+            font-variant-numeric: tabular-nums;
+            opacity: 0.8;
+            margin-left: auto;
+        }
+
+        .calendar-empty-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+        }
+
+        .export-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .export-option {
+            flex: 1;
+            min-width: 80px;
+            padding: 14px 10px;
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .export-option:hover {
+            border-color: var(--primary);
+        }
+
+        .export-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-glow);
+        }
+
+        .export-option .exp-icon {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .export-option .exp-label {
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 560px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface3);
+            border-radius: 8px;
+            color: var(--text-dim);
+            transition: background var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--border);
+        }
+
+        .cat-manage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .cat-manage-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+        }
+
+        .cat-manage-item .cat-manage-name {
+            flex: 1;
+            font-size: .9rem;
+            font-weight: 500;
+        }
+
+        .cat-manage-item .cat-manage-type {
+            font-size: .7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .cat-manage-subs {
+            padding-left: 24px;
+            margin-top: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .cat-manage-sub {
+            font-size: .8rem;
+            color: var(--text-dim);
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cat-manage-sub::before {
+            content: '›';
+            color: var(--text-muted);
+        }
+
+        .add-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .add-row input {
+            flex: 1;
+        }
+
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(4px);
+            z-index: 250;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-overlay.open {
+            display: flex;
+        }
+
+        .confirm-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            text-align: center;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+            max-width: 380px;
+            width: 90%;
+        }
+
+        .confirm-box h3 {
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .confirm-box p {
+            color: var(--text-dim);
+            font-size: .9rem;
+            margin-bottom: 20px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-size: .85rem;
+            font-weight: 500;
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+            animation: slideIn .3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, var(--green), #00b87a);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, var(--red), #ef5350);
+        }
+
+        .toast.info {
+            background: linear-gradient(135deg, var(--primary), #8b7cf7);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .material-icons-round {
+            font-size: 40px;
+            margin-bottom: 8px;
+            color: var(--border);
+        }
+
+        .empty-state p {
+            font-size: .85rem;
+        }
+
+        .history-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .history-toolbar .form-group {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        /* DAILY PROGRESS RING */
+        .progress-ring-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .progress-ring-wrap {
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+
+        .progress-ring-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--surface3) 0% 100%);
+        }
+
+        .progress-ring-fill {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            /* conic-gradient set via JS */
+        }
+
+        .progress-ring-inner {
+            position: absolute;
+            inset: 14px;
+            border-radius: 50%;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-ring-inner .pct {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--green);
+        }
+
+        .progress-ring-inner .pct-label {
+            font-size: .65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: .5px;
+        }
+
+        .progress-legend {
+            display: flex;
+            gap: 16px;
+            font-size: .78rem;
+        }
+
+        .progress-legend .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .progress-legend .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .target-edit-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 4px;
+        }
+
+        .target-edit-row input {
+            width: 60px;
+            text-align: center;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: .8rem;
+            font-weight: 600;
+        }
+
+        .target-edit-row label {
+            font-size: .75rem;
+            color: var(--text-muted);
+        }
+
+        /* MULTI-DATE CHIPS */
+        .date-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+            min-height: 28px;
+        }
+
+        .date-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--primary-glow);
+            border: 1px solid rgba(108, 92, 231, .3);
+            border-radius: 16px;
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .date-chip .remove-chip {
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            opacity: .7;
+        }
+
+        .date-chip .remove-chip:hover {
+            opacity: 1;
+            color: var(--red);
+        }
+
+        /* RANDOMIZER TOGGLE */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+
+        .toggle-row .toggle-label {
+            flex: 1;
+            font-size: .85rem;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 22px;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            position: relative;
+            transition: background var(--transition);
+            flex-shrink: 0;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            transition: all var(--transition);
+        }
+
+        .toggle-switch.on {
+            background: var(--green);
+            border-color: var(--green);
+        }
+
+        .toggle-switch.on::after {
+            left: 20px;
+            background: white;
+        }
+
+        .randomizer-fields {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            border: 1px dashed var(--border);
+        }
+
+        .randomizer-fields.visible {
+            display: flex;
+        }
+
+        /* MULTI-SELECT CALENDAR */
+        .ms-calendar {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        .ms-calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .ms-month-label {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+        .ms-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .ms-day-name {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .ms-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            background: var(--surface);
+            color: var(--text-main);
+            border: 1px solid transparent;
+        }
+        .ms-day:hover:not(.empty) {
+            background: var(--surface3);
+            transform: scale(1.05);
+            z-index: 2;
+        }
+        .ms-day.empty {
+            cursor: default;
+            background: transparent;
+        }
+        .ms-day.selected {
+            background: var(--primary);
+            color: white !important;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(91, 155, 213, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .ms-day.today:not(.selected) {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        .ms-nav-btn {
+            background: var(--surface3);
+            border: none;
+            color: var(--text-main);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ms-nav-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .ms-calendar-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="app-header">
+        <div class="app-logo">
+            <div class="icon">⏱</div>
+            <div>DevTracker <span class="app-version">v1.0.0</span></div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-ghost" onclick="toggleTimeFormat()" title="Toggle Time Format" id="timeFormatGrpBtn" style="padding:0 12px; font-weight:bold; font-size:0.9rem; width: 65px;">
+                <span id="timeFormatLabel">12:30</span>
+            </button>
+            <button class="btn btn-ghost" onclick="toggleTheme()" title="Toggle Theme" id="themeGroupBtn" style="padding:0 12px;">
+                <span class="material-icons-round" id="themeIcon">light_mode</span>
+            </button>
+            <button class="btn btn-ghost" onclick="openCategoryModal()">
+                <span class="material-icons-round">folder</span> Categories
+            </button>
+            <button class="btn btn-ghost" onclick="openProjectModal()">
+                <span class="material-icons-round">account_tree</span> Projects
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="openExportPanel()">
+                <span class="material-icons-round">download</span> Export
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="left-col">
+            <!-- Timer Card -->
+            <div class="card timer-card" id="timerCard">
+                <div class="timer-status-badge idle" id="statusBadge">
+                    <span class="dot"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+                <div class="timer-display" id="timerDisplay">00:00</div>
+                <div class="timer-category" id="timerCategory">Select a category to start tracking</div>
+                <div class="timer-meta" id="timerMeta" style="display:none;">
+                    <div class="timer-meta-item">
+                        <div class="label">Active</div>
+                        <div class="value green" id="metaActive">00:00</div>
+                    </div>
+                    <div class="timer-meta-item">
+                        <div class="label">Break</div>
+                        <div class="value blue" id="metaBreak">00:00</div>
+                    </div>
+                    <div class="timer-meta-item">
+                        <div class="label">Paused</div>
+                        <div class="value yellow" id="metaPause">00:00</div>
+                    </div>
+                </div>
+                <div id="startForm" class="start-form">
+                    <div class="form-group">
+                        <label>Project</label>
+                        <select id="projectSelect">
+                            <option value="">— Select Project —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="categorySelect" onchange="loadSubcategories()">
+                            <option value="">— Select Category —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subcategory</label>
+                        <select id="subcategorySelect">
+                            <option value="">— General —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes (optional)</label>
+                        <input type="text" id="notesInput" placeholder="What are you working on?">
+                    </div>
+                    <button class="btn btn-success btn-lg" onclick="startTimer()">
+                        <span class="material-icons-round">play_arrow</span> Start Tracking
+                    </button>
+                </div>
+                <div id="timerControls" class="timer-controls" style="display:none;"></div>
+            </div>
+
+            <!-- Tabs Card -->
+            <div class="card" style="margin-top:20px;">
+                <div class="tab-bar">
+                    <button class="tab-btn active" onclick="switchTab('today')">Today</button>
+                    <button class="tab-btn" onclick="switchTab('history')">History</button>
+                    <button class="tab-btn" onclick="switchTab('calendar')">Calendar</button>
+                    <button class="tab-btn" onclick="switchTab('totals')">Totals</button>
+                    <button class="tab-btn" onclick="switchTab('export')">Export</button>
+                </div>
+
+                <div id="tab-today" class="tab-content active">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <span style="font-size:.85rem;color:var(--text-dim);">Today's Sessions</span>
+                        <button class="btn btn-ghost btn-sm" onclick="openSessionModal()">
+                            <span class="material-icons-round">add</span> Add Entry
+                        </button>
+                    </div>
+                    <div id="todaySessions">
+                        <div class="empty-state"><span class="material-icons-round">hourglass_empty</span>
+                            <p>No sessions today yet. Start tracking!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-history" class="tab-content">
+                    <div class="history-toolbar">
+                        <div class="form-group"><label>From</label><input type="date" id="historyStart"></div>
+                        <div class="form-group"><label>To</label><input type="date" id="historyEnd"></div>
+                        <button class="btn btn-primary" onclick="loadHistory()" style="height:40px;">
+                            <span class="material-icons-round">search</span>
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="openSessionModal()" style="height:40px;">
+                            <span class="material-icons-round">add</span> Add
+                        </button>
+                        <button class="btn btn-ghost btn-sm" id="historyExportBtn" onclick="exportFromHistory()"
+                            style="height:40px;display:none;">
+                            <span class="material-icons-round">download</span> Export
+                        </button>
+                    </div>
+                    <div id="historyList">
+                        <div class="empty-state"><span class="material-icons-round">event_note</span>
+                            <p>Select a date range and search</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-calendar" class="tab-content">
+                    <div class="calendar-header">
+                        <div class="calendar-month-title" id="calendarMonthTitle">Month Year</div>
+                        <div class="calendar-nav">
+                            <button class="btn btn-ghost btn-sm" onclick="navCalendar(-1)"><span class="material-icons-round">chevron_left</span></button>
+                            <button class="btn btn-ghost btn-sm" onclick="resetCalendarToToday()">Today</button>
+                            <button class="btn btn-ghost btn-sm" onclick="navCalendar(1)"><span class="material-icons-round">chevron_right</span></button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="calendar-day-header">Sun</div>
+                        <div class="calendar-day-header">Mon</div>
+                        <div class="calendar-day-header">Tue</div>
+                        <div class="calendar-day-header">Wed</div>
+                        <div class="calendar-day-header">Thu</div>
+                        <div class="calendar-day-header">Fri</div>
+                        <div class="calendar-day-header">Sat</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Days injected via JS -->
+                    </div>
+                </div>
+
+                <div id="tab-totals" class="tab-content">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 style="font-size:1.1rem;font-weight:600;">Time Totals</h3>
+                        <div class="mode-toggle" style="margin-bottom:0;" id="totalsPeriodGroup">
+                            <button class="active" onclick="loadTotals('day')">Day</button>
+                            <button onclick="loadTotals('week')">Week</button>
+                            <button onclick="loadTotals('month')">Month</button>
+                            <button onclick="loadTotals('year')">Year</button>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-grid" style="margin-bottom:24px;">
+                        <div class="stat-box">
+                            <div class="stat-value green" id="totalsActive" style="font-size:1.8rem;">00:00</div>
+                            <div class="stat-label">Total Active Time</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value blue" id="totalsBreak" style="font-size:1.8rem;">00:00</div>
+                            <div class="stat-label">Total Break Time</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color:var(--primary);font-size:1.8rem;" id="totalsSessions">0</div>
+                            <div class="stat-label">Total Sessions</div>
+                        </div>
+                    </div>
+                    
+                    <h4 style="font-size:.95rem;font-weight:600;margin-bottom:12px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:8px;">Category Breakdown</h4>
+                    <div class="category-bar" id="totalsBreakdown">
+                        <div class="empty-state" style="padding:12px;"><p>No data</p></div>
+                    </div>
+                </div>
+
+                <div id="tab-export" class="tab-content">
+                    <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">Generate a report for a
+                        specific date range.</p>
+                    <div style="display:flex;gap:10px;margin-bottom:14px;">
+                        <div class="form-group" style="flex:1;"><label>From</label><input type="date" id="exportStart">
+                        </div>
+                        <div class="form-group" style="flex:1;"><label>To</label><input type="date" id="exportEnd">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label>Name (Prepared for)</label>
+                        <input type="text" id="exportPreparedFor" placeholder="Enter name...">
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label>Project</label>
+                        <select id="exportProject">
+                            <option value="all">All Projects</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px; flex-direction:row; align-items:center;">
+                        <input type="checkbox" id="exportDecimal" style="width:auto; margin-right:8px;">
+                        <label for="exportDecimal" style="margin-bottom:0;">Export times as decimal (e.g., 1.5h)</label>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px; flex-direction:row; align-items:center;">
+                        <input type="checkbox" id="exportSimple" style="width:auto; margin-right:8px;">
+                        <label for="exportSimple" style="margin-bottom:0;">Simple Export (Minimal Columns)</label>
+                    </div>
+                    <div class="export-options" style="margin-bottom:14px;">
+                        <div class="export-option selected" data-format="excel" onclick="selectExportFormat(this)">
+                            <div class="exp-icon">📊</div>
+                            <div class="exp-label">Excel</div>
+                        </div>
+                        <div class="export-option" data-format="pdf" onclick="selectExportFormat(this)">
+                            <div class="exp-icon">📄</div>
+                            <div class="exp-label">PDF</div>
+                        </div>
+                        <div class="export-option" data-format="word" onclick="selectExportFormat(this)">
+                            <div class="exp-icon">📝</div>
+                            <div class="exp-label">Word</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-lg" style="width:100%;" onclick="doExport()">
+                        <span class="material-icons-round">download</span> Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="card">
+                <div class="card-title"><span class="material-icons-round">track_changes</span> Daily Goal</div>
+                <div class="progress-ring-container" id="progressRingContainer">
+                    <div class="progress-ring-wrap">
+                        <div class="progress-ring-bg"></div>
+                        <div class="progress-ring-fill" id="progressRingFill"></div>
+                        <div class="progress-ring-inner">
+                            <div class="pct" id="progressPct">0%</div>
+                            <div class="pct-label">of daily goal</div>
+                        </div>
+                    </div>
+                    <div class="progress-legend">
+                        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span id="progressWorked">0h 0m</span> worked</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:var(--surface3)"></div><span id="progressRemaining">9h 0m</span> left</div>
+                    </div>
+                    <div class="target-edit-row">
+                        <label>Target:</label>
+                        <input type="number" id="dailyTargetInput" value="9" min="1" max="24" step="0.5" onchange="saveDailyTarget()">
+                        <label>hours</label>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span class="material-icons-round">insights</span> Today's Overview</div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-value green" id="statActive">00:00</div>
+                        <div class="stat-label">Active Time</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value blue" id="statBreak">00:00</div>
+                        <div class="stat-label">Break Time</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color:var(--primary)" id="statSessions">0</div>
+                        <div class="stat-label">Sessions</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color:var(--orange)" id="statTopCat">—</div>
+                        <div class="stat-label">Top Category</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span class="material-icons-round">donut_small</span> Time Breakdown</div>
+                <div class="category-bar" id="categoryBreakdown">
+                    <div class="empty-state" style="padding:12px;">
+                        <p>No data yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECT MODAL -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><span class="material-icons-round"
+                        style="vertical-align:middle;margin-right:6px;">account_tree</span>Manage Projects</h2>
+                <button class="modal-close" onclick="closeProjectModal()"><span
+                        class="material-icons-round">close</span></button>
+            </div>
+            <div class="add-row" style="margin-bottom:16px;">
+                <input type="text" id="newProjectName" placeholder="New project name..."
+                    style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-size:.85rem;">
+                <button class="btn btn-primary btn-sm" onclick="addNewProject()"><span
+                        class="material-icons-round">add</span> Add</button>
+            </div>
+            <div class="cat-manage-list" id="projectManageList"></div>
+        </div>
+    </div>
+
+    <!-- CATEGORY MODAL -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><span class="material-icons-round"
+                        style="vertical-align:middle;margin-right:6px;">folder</span>Manage Categories</h2>
+                <button class="modal-close" onclick="closeCategoryModal()"><span
+                        class="material-icons-round">close</span></button>
+            </div>
+            <div class="add-row" style="margin-bottom:16px;">
+                <input type="text" id="newCategoryName" placeholder="New category name..."
+                    style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-size:.85rem;">
+                <button class="btn btn-primary btn-sm" onclick="addNewCategory()"><span
+                        class="material-icons-round">add</span> Add</button>
+            </div>
+            <div class="cat-manage-list" id="categoryManageList"></div>
+        </div>
+    </div>
+
+    <!-- SESSION EDIT/ADD MODAL -->
+    <div class="modal-overlay" id="sessionModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="sessionModalTitle"><span class="material-icons-round"
+                        style="vertical-align:middle;margin-right:6px;">edit</span>Add Session</h2>
+                <button class="modal-close" onclick="closeSessionModal()"><span
+                        class="material-icons-round">close</span></button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <div class="mode-toggle">
+                    <button id="modeRangeBtn" class="active" onclick="setSessionMode('range')">Time Range</button>
+                    <button id="modeDurationBtn" onclick="setSessionMode('duration')">Duration</button>
+                </div>
+                
+                <!-- Single date (for editing) -->
+                <div class="form-group" id="singleDateGroup">
+                    <label>Date</label>
+                    <input type="date" id="sessionDate">
+                </div>
+
+                <!-- Multi-date (for adding) -->
+                <div id="multiDateGroup" style="display:none;">
+                    <div class="form-group">
+                        <label>Select Dates <span style="font-weight:normal;font-size:0.8em;color:var(--text-dim);">(Highlight multiple)</span></label>
+                        <div class="ms-calendar">
+                            <div class="ms-calendar-header">
+                                <button class="ms-nav-btn" type="button" onclick="navMSCalendar(-1)"><span class="material-icons-round">chevron_left</span></button>
+                                <div class="ms-month-label" id="msMonthLabel">Month Year</div>
+                                <button class="ms-nav-btn" type="button" onclick="navMSCalendar(1)"><span class="material-icons-round">chevron_right</span></button>
+                            </div>
+                            <div class="ms-calendar-grid" id="msCalendarGrid">
+                                <!-- Calendar days rendered here -->
+                            </div>
+                            <div class="ms-calendar-legend">
+                                <div class="legend-item"><div class="legend-dot" style="background:var(--primary)"></div>Selected</div>
+                                <div class="legend-item"><div class="legend-dot" style="border:1px solid var(--primary)"></div>Today</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Randomize toggle (only visible in add/multi mode) -->
+                <div id="randomizeSection" style="display:none;">
+                    <div class="toggle-row" onclick="toggleRandomize()">
+                        <span class="material-icons-round" style="color:var(--orange);font-size:20px;">casino</span>
+                        <span class="toggle-label">Randomize times within range</span>
+                        <div class="toggle-switch" id="randomizeToggle"></div>
+                    </div>
+                    <div class="randomizer-fields" id="randomizerFields">
+                        <div style="display:flex;gap:10px;">
+                            <div class="form-group" style="flex:1;">
+                                <label>Earliest Start</label>
+                                <input type="time" id="randStartTime" value="08:00">
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label>Latest End</label>
+                                <input type="time" id="randEndTime" value="17:00">
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;">
+                            <div class="form-group" style="flex:1;">
+                                <label>Min Duration (hrs)</label>
+                                <input type="number" id="randMinDur" value="1.0" min="0.25" max="12" step="0.25">
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label>Max Duration (hrs)</label>
+                                <input type="number" id="randMaxDur" value="2.0" min="0.25" max="12" step="0.25">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sessionModeRange" style="display:flex;gap:10px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>Start Time</label>
+                        <input type="time" id="sessionStartTime">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>End Time</label>
+                        <input type="time" id="sessionEndTime">
+                    </div>
+                </div>
+                
+                <div id="sessionModeDuration" class="form-group" style="display:none;">
+                    <label id="sessionDurationLabel">Time Spent</label>
+                    <input type="time" id="sessionDuration" value="01:00">
+                </div>
+                <div class="form-group">
+                    <label>Project</label>
+                    <select id="sessionProjSelect">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="sessionCatSelect" onchange="loadSessionSubcats()">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Subcategory</label>
+                    <select id="sessionSubSelect">
+                        <option value="">— General —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <input type="text" id="sessionNotes" placeholder="What were you working on?">
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-success btn-lg" id="sessionSaveBtn" onclick="saveSession()" style="flex:1;">
+                        <span class="material-icons-round">save</span> Save Session
+                    </button>
+                    <button class="btn btn-danger btn-lg" id="sessionDeleteBtn" onclick="deleteSessionFromModal()" style="display:none; padding: 14px 20px;">
+                        <span class="material-icons-round">delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STOP CONFIRM -->
+    <div class="confirm-overlay" id="stopConfirm">
+        <div class="confirm-box">
+            <h3>⏹ Stop Session?</h3>
+            <p>This will end your current tracking session and save the data.</p>
+            <div class="confirm-actions">
+                <button class="btn btn-ghost" onclick="cancelStop()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmStop()">Stop Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRM -->
+    <div class="confirm-overlay" id="deleteConfirm">
+        <div class="confirm-box">
+            <h3>🗑 Delete Session?</h3>
+            <p>This will permanently remove this session.</p>
+            <div class="confirm-actions">
+                <button class="btn btn-ghost" onclick="cancelDelete()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ─── STATE ───
+        let projects = [];
+        let categories = [];
+        let selectedExportFormat = 'excel';
+        let timerInterval = null;
+        let currentStatus = null;
+        let stopConfirmPending = false;
+        let editingSessionId = null;
+        let deletingSessionId = null;
+        let currentCalendarDate = new Date();
+        let currentSessionMode = 'range'; // 'range' or 'duration'
+        let selectedDates = []; // multi-date chips
+        let randomizeEnabled = false;
+        let dailyTargetHours = 9.0;
+        let timeFormatPref = 'normal';
+        let currentMSYear = new Date().getFullYear();
+        let currentMSMonth = new Date().getMonth();
+        
+        // ─── THEME ───
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isLight = html.dataset.theme === 'light';
+            html.dataset.theme = isLight ? 'dark' : 'light';
+            document.getElementById('themeIcon').textContent = isLight ? 'light_mode' : 'dark_mode';
+            localStorage.setItem('devtracker-theme', html.dataset.theme);
+        }
+
+        async function toggleTimeFormat() {
+            timeFormatPref = timeFormatPref === 'normal' ? 'decimal' : 'normal';
+            document.getElementById('timeFormatLabel').textContent = timeFormatPref === 'normal' ? '12:30' : '12.5h';
+            
+            // Save preference
+            await api('/api/settings', { method: 'POST', body: { time_format: timeFormatPref } });
+            
+            // Re-render UI
+            if (currentStatus && currentStatus.running) updateUI(currentStatus);
+            loadToday();
+            if (document.getElementById('historyStart').value) loadHistory();
+            
+            // Determine active totals period and reload
+            const activeTotalBtn = document.querySelector('#totalsPeriodGroup button.active');
+            if (activeTotalBtn) {
+                const periods = ['day', 'week', 'month', 'year'];
+                const idx = Array.from(activeTotalBtn.parentNode.children).indexOf(activeTotalBtn);
+                if (idx >= 0) loadTotals(periods[idx]);
+            }
+        }
+
+        // ─── API ───
+        async function api(url, opts = {}) {
+            try {
+                const res = await fetch(url, {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...opts,
+                    body: opts.body ? JSON.stringify(opts.body) : undefined,
+                });
+                return await res.json();
+            } catch (e) {
+                console.error('API error:', e);
+                toast('Connection error', 'error');
+                return null;
+            }
+        }
+
+        function toast(msg, type = 'info') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `<span class="material-icons-round">${type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info'}</span>${msg}`;
+            c.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 3000);
+        }
+
+        function formatDuration(seconds) {
+            seconds = seconds || 0;
+            if (timeFormatPref === 'decimal') {
+                return (seconds / 3600).toFixed(2) + 'h';
+            }
+            seconds = Math.max(0, Math.floor(seconds));
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return h > 0
+                ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+        
+        function getLocalISODate(d) {
+            const tzOffsetMs = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - tzOffsetMs).toISOString().split('T')[0];
+        }
+
+        // ─── PROJECTS ───
+        async function loadProjects() {
+            projects = await api('/api/projects') || [];
+            const select1 = document.getElementById('projectSelect');
+            const select2 = document.getElementById('sessionProjSelect');
+            const select3 = document.getElementById('exportProject');
+            if (select1) select1.innerHTML = '<option value="">— Select Project —</option>' + projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            if (select2) select2.innerHTML = '<option value="">— Select —</option>' + projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            if (select3) select3.innerHTML = '<option value="all">All Projects</option>' + projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        }
+
+        function openProjectModal() { document.getElementById('projectModal').classList.add('open'); renderProjectModal(); }
+        function closeProjectModal() { document.getElementById('projectModal').classList.remove('open'); loadProjects(); }
+
+        async function renderProjectModal() {
+            const projs = await api('/api/projects') || [];
+            document.getElementById('projectManageList').innerHTML = projs.map(p => {
+                return `<div>
+            <div class="cat-manage-item">
+                <span class="cat-manage-name">${p.name}</span>
+                ${p.id !== 1 ? `<button class="btn btn-danger btn-sm" onclick="deleteProj(${p.id})">Delete</button>` : ''}
+            </div>
+        </div>`;
+            }).join('');
+        }
+
+        async function addNewProject() {
+            const input = document.getElementById('newProjectName');
+            const name = input.value.trim();
+            if (!name) return;
+            const res = await api('/api/projects', { method: 'POST', body: { name, description: '' } });
+            if (res && !res.error) { toast(`Project "${name}" added`, 'success'); input.value = ''; renderProjectModal(); }
+            else { toast(res?.error || 'Failed', 'error'); }
+        }
+
+        async function deleteProj(id) {
+            await api(`/api/projects/${id}`, { method: 'DELETE' });
+            toast('Project deleted', 'success');
+            renderProjectModal();
+        }
+
+        // ─── CATEGORIES ───
+        async function loadCategories() {
+            categories = await api('/api/categories') || [];
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = '<option value="">— Select Category —</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name + (cat.is_custom ? ' ★' : '');
+                select.appendChild(opt);
+            });
+        }
+
+        function loadSubcategories() {
+            const catId = parseInt(document.getElementById('categorySelect').value);
+            const select = document.getElementById('subcategorySelect');
+            select.innerHTML = '<option value="">— General —</option>';
+            if (!catId) return;
+            const cat = categories.find(c => c.id === catId);
+            if (!cat) return;
+            (cat.subcategories || []).forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub.id;
+                opt.textContent = sub.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // ─── TIMER ───
+        async function startTimer() {
+            const project_id = document.getElementById('projectSelect').value;
+            const category_id = document.getElementById('categorySelect').value;
+            const subcategory_id = document.getElementById('subcategorySelect').value;
+            const notes = document.getElementById('notesInput').value;
+
+            if (!project_id) {
+                toast('Please select a Project', 'error');
+                return;
+            }
+
+            const body = { project_id };
+            if (category_id) body.category_id = category_id;
+            if (subcategory_id) body.subcategory_id = subcategory_id;
+            if (notes) body.notes = notes;
+
+            const res = await api('/api/timer/start', { method: 'POST', body });
+            if (res && res.session_id) {
+                startPolling();
+                document.getElementById('notesInput').value = '';
+            } else {
+                toast(res?.error || 'Failed to start timer', 'error');
+            }
+        }
+
+        async function pauseTimer() {
+            const res = await api('/api/timer/pause', { method: 'POST' });
+            if (res && !res.error) toast('Session paused', 'info');
+        }
+
+        async function resumeTimer() {
+            const res = await api('/api/timer/resume', { method: 'POST' });
+            if (res && !res.error) toast('Resumed!', 'success');
+        }
+
+        async function startBreak() {
+            const res = await api('/api/timer/break/start', { method: 'POST' });
+            if (res && !res.error) toast('Break started ☕', 'info');
+        }
+
+        async function endBreak() {
+            const res = await api('/api/timer/break/end', { method: 'POST' });
+            if (res && !res.error) toast('Back to work!', 'success');
+        }
+
+        function requestStop() {
+            stopConfirmPending = true;
+            document.getElementById('stopConfirm').classList.add('open');
+        }
+
+        function cancelStop() {
+            stopConfirmPending = false;
+            document.getElementById('stopConfirm').classList.remove('open');
+        }
+
+        async function confirmStop() {
+            document.getElementById('stopConfirm').classList.remove('open');
+            stopConfirmPending = false;
+            const res = await api('/api/timer/stop', { method: 'POST' });
+            if (res && !res.error) {
+                toast(`Session complete! Active: ${res.summary.active}`, 'success');
+                stopPolling();
+                updateUI({ running: false });
+                loadToday();
+            } else {
+                toast(res?.error || 'Failed to stop', 'error');
+            }
+        }
+
+        // ─── POLLING ───
+        async function pollTimer() {
+            if (stopConfirmPending) return;
+            const data = await api('/api/timer/status');
+            if (data) { currentStatus = data; updateUI(data); }
+        }
+
+        function startPolling() { pollTimer(); if (timerInterval) clearInterval(timerInterval); timerInterval = setInterval(pollTimer, 1000); }
+        function stopPolling() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+
+        function updateUI(data) {
+            const card = document.getElementById('timerCard');
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const display = document.getElementById('timerDisplay');
+            const category = document.getElementById('timerCategory');
+            const meta = document.getElementById('timerMeta');
+            const form = document.getElementById('startForm');
+            const controls = document.getElementById('timerControls');
+
+            card.className = 'card timer-card';
+
+            if (!data.running) {
+                badge.className = 'timer-status-badge idle'; statusText.textContent = 'Ready';
+                display.textContent = '00:00'; category.textContent = 'Select a category to start tracking';
+                meta.style.display = 'none'; form.style.display = 'flex'; controls.style.display = 'none';
+                return;
+            }
+
+            form.style.display = 'none'; controls.style.display = 'flex'; meta.style.display = 'flex';
+
+            if (data.status === 'active') { badge.className = 'timer-status-badge active'; statusText.textContent = 'Working'; card.classList.add('active'); }
+            else if (data.status === 'paused') { badge.className = 'timer-status-badge paused'; statusText.textContent = 'Paused'; card.classList.add('paused'); }
+            else if (data.status === 'break') { badge.className = 'timer-status-badge on-break'; statusText.textContent = 'On Break'; card.classList.add('on-break'); }
+
+            display.textContent = formatDuration(data.active_seconds);
+            category.innerHTML = `<strong>${data.project}</strong> › <strong>${data.category}</strong> › ${data.subcategory}${data.notes ? ` — <em>${data.notes}</em>` : ''}`;
+            document.getElementById('metaActive').textContent = formatDuration(data.active_seconds);
+            document.getElementById('metaBreak').textContent = formatDuration(data.break_seconds);
+            document.getElementById('metaPause').textContent = formatDuration(data.pause_seconds);
+
+            let btns = '';
+            if (data.status === 'active') {
+                btns += `<button class="btn btn-warning" onclick="pauseTimer()"><span class="material-icons-round">pause</span> Pause</button>`;
+                btns += `<button class="btn btn-info" onclick="startBreak()"><span class="material-icons-round">coffee</span> Break</button>`;
+            } else if (data.status === 'paused') {
+                btns += `<button class="btn btn-success" onclick="resumeTimer()"><span class="material-icons-round">play_arrow</span> Resume</button>`;
+            } else if (data.status === 'break') {
+                btns += `<button class="btn btn-success" onclick="endBreak()"><span class="material-icons-round">play_arrow</span> End Break</button>`;
+            }
+            btns += `<button class="btn btn-danger" onclick="requestStop()"><span class="material-icons-round">stop</span> Stop</button>`;
+            controls.innerHTML = btns;
+        }
+
+        // ─── TODAY ───
+        async function loadToday() {
+            const data = await api('/api/sessions/today');
+            if (!data) return;
+
+            document.getElementById('statActive').textContent = formatDuration(data.summary.total_active_seconds);
+            document.getElementById('statBreak').textContent = formatDuration(data.summary.total_break_seconds);
+            document.getElementById('statSessions').textContent = data.summary.total_sessions;
+
+            const cats = data.summary.by_category;
+            const catEntries = Object.entries(cats);
+            document.getElementById('statTopCat').textContent = catEntries.length > 0
+                ? catEntries.sort((a, b) => b[1].active_seconds - a[1].active_seconds)[0][0] : '—';
+
+            const breakdown = document.getElementById('categoryBreakdown');
+            if (catEntries.length === 0) {
+                breakdown.innerHTML = '<div class="empty-state" style="padding:12px;"><p>No data yet</p></div>';
+            } else {
+                const maxSec = Math.max(...catEntries.map(e => e[1].active_seconds));
+                breakdown.innerHTML = catEntries.sort((a, b) => b[1].active_seconds - a[1].active_seconds).map(([name, d]) => {
+                    const pct = maxSec > 0 ? (d.active_seconds / maxSec * 100) : 0;
+                    return `<div class="cat-bar-item"><span class="cat-name">${name}</span><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%"></div></div><span class="cat-time">${formatDuration(d.active_seconds)}</span></div>`;
+                }).join('');
+            }
+
+            renderSessionList('todaySessions', data.sessions, false);
+
+            // Update daily progress ring
+            updateProgressRing(data.summary.total_active_seconds || 0);
+        }
+
+        function renderSessionList(containerId, sessions, showDate) {
+            const container = document.getElementById(containerId);
+            if (sessions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="material-icons-round">hourglass_empty</span><p>No sessions found</p></div>';
+                return;
+            }
+            container.innerHTML = '<div class="session-list">' + sessions.map(s => {
+                const start = s.start_time ? new Date(s.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+                const end = s.end_time ? new Date(s.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+                const dateStr = showDate ? `${s.date} · ` : '';
+                return `<div class="session-item">
+            <div class="cat-dot" style="background:${s.category_color || 'var(--primary)'}"></div>
+            <div class="session-info">
+                <div class="session-cat">${s.category_name}</div>
+                <div class="session-subcat">${dateStr}${s.subcategory_name || 'General'}${s.notes ? ' — ' + s.notes : ''}</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="session-time">${formatDuration(s.total_active_seconds || 0)}</div>
+                <div class="session-clock">${start}–${end}</div>
+            </div>
+            <div class="session-actions">
+                <button onclick="editSession(${s.id})" title="Edit"><span class="material-icons-round">edit</span></button>
+                <button onclick="requestDelete(${s.id})" title="Delete"><span class="material-icons-round">delete</span></button>
+            </div>
+        </div>`;
+            }).join('') + '</div>';
+        }
+
+        // ─── HISTORY ───
+        async function loadHistory() {
+            const start = document.getElementById('historyStart').value;
+            const end = document.getElementById('historyEnd').value;
+            if (!start || !end) { toast('Select a date range', 'error'); return; }
+
+            const data = await api(`/api/sessions/history?start=${start}&end=${end}`);
+            if (!data) return;
+
+            document.getElementById('historyExportBtn').style.display = data.sessions.length > 0 ? 'inline-flex' : 'none';
+
+            const container = document.getElementById('historyList');
+            if (data.sessions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="material-icons-round">event_busy</span><p>No sessions found</p></div>';
+                return;
+            }
+
+            container.innerHTML = `<p style="font-size:.85rem;color:var(--text-dim);margin-bottom:10px;">${data.total_sessions} sessions · Active: ${formatDuration(data.total_active_seconds)} · Break: ${formatDuration(data.total_break_seconds)}</p>`;
+            const listDiv = document.createElement('div');
+            container.appendChild(listDiv);
+            listDiv.outerHTML = '';
+            renderSessionList('historyList', data.sessions, true);
+            // Prepend summary
+            const summary = document.createElement('p');
+            summary.style.cssText = 'font-size:.85rem;color:var(--text-dim);margin-bottom:10px;';
+            summary.textContent = `${data.total_sessions} sessions · Active: ${formatDuration(data.total_active_seconds)} · Break: ${formatDuration(data.total_break_seconds)}`;
+            document.getElementById('historyList').prepend(summary);
+        }
+
+        function exportFromHistory() {
+            const start = document.getElementById('historyStart').value;
+            const end = document.getElementById('historyEnd').value;
+            if (!start || !end) { toast('Select a date range first', 'error'); return; }
+            document.getElementById('exportStart').value = start;
+            document.getElementById('exportEnd').value = end;
+            switchTab('export');
+            toast('Date range copied — choose format and export', 'info');
+        }
+
+        // ─── SESSION ADD/EDIT MODAL ───
+        // ─── SESSION ADD/EDIT MODAL ───
+        function openSessionModal(sessionId = null, defaultDateStr = null) {
+            editingSessionId = sessionId;
+            selectedDates = [];
+            randomizeEnabled = false;
+            const title = document.getElementById('sessionModalTitle');
+            const btn = document.getElementById('sessionSaveBtn');
+
+            // Populate category dropdown
+            const sel = document.getElementById('sessionCatSelect');
+            sel.innerHTML = '<option value="">— Select Category (Optional) —</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                sel.appendChild(opt);
+            });
+
+            // Reset randomizer UI
+            document.getElementById('randomizeToggle').classList.remove('on');
+            document.getElementById('randomizerFields').classList.remove('visible');
+
+            if (sessionId) {
+                // Edit mode: single date, no multi-date, no randomizer
+                title.innerHTML = '<span class="material-icons-round" style="vertical-align:middle;margin-right:6px;">edit</span>Edit Session';
+                btn.innerHTML = '<span class="material-icons-round">save</span> Update Session';
+                document.getElementById('singleDateGroup').style.display = 'block';
+                document.getElementById('multiDateGroup').style.display = 'none';
+                document.getElementById('randomizeSection').style.display = 'none';
+                document.getElementById('sessionModeRange').style.display = currentSessionMode === 'range' ? 'flex' : 'none';
+                document.getElementById('sessionModeDuration').style.display = currentSessionMode === 'duration' ? 'block' : 'none';
+            } else {
+                // Add mode: multi-date, randomizer available
+                title.innerHTML = '<span class="material-icons-round" style="vertical-align:middle;margin-right:6px;">add</span>Add Session';
+                btn.innerHTML = '<span class="material-icons-round">save</span> Save Session';
+                document.getElementById('singleDateGroup').style.display = 'none';
+                document.getElementById('multiDateGroup').style.display = 'block';
+                document.getElementById('randomizeSection').style.display = 'block';
+                document.getElementById('sessionModeRange').style.display = currentSessionMode === 'range' ? 'flex' : 'none';
+                document.getElementById('sessionModeDuration').style.display = currentSessionMode === 'duration' ? 'block' : 'none';
+
+                // Defaults
+                const targetDate = defaultDateStr ? new Date(defaultDateStr + 'T12:00:00') : new Date();
+                currentMSYear = targetDate.getFullYear();
+                currentMSMonth = targetDate.getMonth();
+                const targetStr = defaultDateStr || getLocalISODate(targetDate);
+                selectedDates = [targetStr];
+                renderMSCalendar();
+
+                document.getElementById('sessionStartTime').value = '09:00';
+                document.getElementById('sessionEndTime').value = '10:00';
+                document.getElementById('sessionDuration').value = '';
+                document.getElementById('sessionNotes').value = '';
+                document.getElementById('sessionProjSelect').value = projects.length > 0 ? projects[0].id : '';
+                document.getElementById('sessionCatSelect').value = '';
+                document.getElementById('sessionSubSelect').innerHTML = '<option value="">— General —</option>';
+            }
+
+            document.getElementById('sessionDeleteBtn').style.display = sessionId ? 'block' : 'none';
+            document.getElementById('sessionModal').classList.add('open');
+        }
+
+        // ─── DELETE FROM MODAL ───
+        function deleteSessionFromModal() {
+            if (!editingSessionId) return;
+            requestDelete(editingSessionId);
+            // The modal will close after confirmDelete()
+        }
+
+        // ─── MULTI-SELECT CALENDAR LOGIC ───
+        function navMSCalendar(dir) {
+            currentMSMonth += dir;
+            if (currentMSMonth < 0) { currentMSMonth = 11; currentMSYear--; }
+            else if (currentMSMonth > 11) { currentMSMonth = 0; currentMSYear++; }
+            renderMSCalendar();
+        }
+
+        function toggleMSDate(dateStr) {
+            if (selectedDates.includes(dateStr)) {
+                selectedDates = selectedDates.filter(d => d !== dateStr);
+            } else {
+                selectedDates.push(dateStr);
+            }
+            renderMSCalendar();
+        }
+
+        function renderMSCalendar() {
+            const grid = document.getElementById('msCalendarGrid');
+            const label = document.getElementById('msMonthLabel');
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            label.textContent = `${monthNames[currentMSMonth]} ${currentMSYear}`;
+            grid.innerHTML = '<div class="ms-day-name">M</div><div class="ms-day-name">T</div><div class="ms-day-name">W</div><div class="ms-day-name">T</div><div class="ms-day-name">F</div><div class="ms-day-name">S</div><div class="ms-day-name">S</div>';
+
+            const firstDay = new Date(currentMSYear, currentMSMonth, 1).getDay(); // 0=Sun
+            const daysInMonth = new Date(currentMSYear, currentMSMonth + 1, 0).getDate();
+            const todayStr = getLocalISODate(new Date());
+
+            // Adjust firstDay for Monday start (0=Mon, 6=Sun)
+            let startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+            for (let i = 0; i < startOffset; i++) {
+                grid.innerHTML += '<div class="ms-day empty"></div>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentMSYear}-${String(currentMSMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isSelected = selectedDates.includes(dateStr);
+                const isToday = dateStr === todayStr;
+                const classes = `ms-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`;
+                grid.innerHTML += `<div class="${classes}" onclick="toggleMSDate('${dateStr}')">${day}</div>`;
+            }
+        }
+
+        // ─── RANDOMIZER ───
+        function toggleRandomize() {
+            randomizeEnabled = !randomizeEnabled;
+            document.getElementById('randomizeToggle').classList.toggle('on', randomizeEnabled);
+            document.getElementById('randomizerFields').classList.toggle('visible', randomizeEnabled);
+            // When randomize is on, hide the manual time range / duration fields
+            if (randomizeEnabled) {
+                document.getElementById('sessionModeRange').style.display = 'none';
+                document.getElementById('sessionModeDuration').style.display = 'none';
+            } else {
+                setSessionMode(currentSessionMode);
+            }
+        }
+        
+        function setSessionMode(mode) {
+            currentSessionMode = mode;
+            document.getElementById('modeRangeBtn').classList.toggle('active', mode === 'range');
+            document.getElementById('modeDurationBtn').classList.toggle('active', mode === 'duration');
+            
+            if (!randomizeEnabled) {
+                document.getElementById('sessionModeRange').style.display = mode === 'range' ? 'flex' : 'none';
+                document.getElementById('sessionModeDuration').style.display = mode === 'duration' ? 'block' : 'none';
+                
+                // Adjust duration input based on preference
+                const durationInput = document.getElementById('sessionDuration');
+                const label = document.getElementById('sessionDurationLabel');
+                if (timeFormatPref === 'decimal') {
+                    durationInput.type = 'number';
+                    durationInput.step = '0.01';
+                    durationInput.min = '0';
+                    durationInput.placeholder = 'e.g. 1.5';
+                    label.innerHTML = 'Time Spent <span style="font-weight:normal;font-size:0.8em;color:var(--text-dim);">(hours)</span>';
+                    if (durationInput.value.includes(':')) durationInput.value = '';
+                } else {
+                    durationInput.type = 'time';
+                    durationInput.removeAttribute('step');
+                    durationInput.removeAttribute('min');
+                    durationInput.removeAttribute('placeholder');
+                    label.textContent = 'Time Spent';
+                    if (!durationInput.value.includes(':') && durationInput.value) durationInput.value = '';
+                }
+            }
+        }
+
+        function closeSessionModal() {
+            document.getElementById('sessionModal').classList.remove('open');
+            editingSessionId = null;
+            selectedDates = [];
+            randomizeEnabled = false;
+        }
+
+        function loadSessionSubcats() {
+            const catId = parseInt(document.getElementById('sessionCatSelect').value);
+            const select = document.getElementById('sessionSubSelect');
+            select.innerHTML = '<option value="">— General —</option>';
+            if (!catId) return;
+            const cat = categories.find(c => c.id === catId);
+            if (!cat) return;
+            (cat.subcategories || []).forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub.id;
+                opt.textContent = sub.name;
+                select.appendChild(opt);
+            });
+        }
+
+        async function saveSession() {
+            const body = {
+                project_id: document.getElementById('sessionProjSelect').value,
+                notes: document.getElementById('sessionNotes').value,
+            };
+            
+            const catId = document.getElementById('sessionCatSelect').value;
+            const subId = document.getElementById('sessionSubSelect').value;
+            if (catId) body.category_id = catId;
+            if (subId) body.subcategory_id = subId;
+
+            if (editingSessionId) {
+                // Edit mode: single date
+                body.date = document.getElementById('sessionDate').value;
+                if (!body.date) { toast('Date is required', 'error'); return; }
+
+                if (currentSessionMode === 'range') {
+                    body.start_time = document.getElementById('sessionStartTime').value;
+                    body.end_time = document.getElementById('sessionEndTime').value;
+                    if (!body.start_time || !body.end_time) { toast('Provide start and end times', 'error'); return; }
+                } else {
+                    body.duration = document.getElementById('sessionDuration').value;
+                    if (!body.duration) { toast('Provide a duration', 'error'); return; }
+                }
+
+                if (!body.project_id) { toast('Project is required', 'error'); return; }
+
+                const res = await api(`/api/sessions/${editingSessionId}`, { method: 'PUT', body });
+                if (res && !res.error) {
+                    toast('Session updated!', 'success');
+                    closeSessionModal();
+                    loadToday();
+                    if (document.getElementById('historyStart').value && document.getElementById('historyEnd').value) loadHistory();
+                    if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar();
+                } else {
+                    toast(res?.error || 'Failed to save', 'error');
+                }
+            } else {
+                // Add mode: multi-date
+                if (selectedDates.length === 0) { toast('Add at least one date', 'error'); return; }
+                if (!body.project_id) { toast('Project is required', 'error'); return; }
+
+                body.dates = selectedDates;
+
+                if (randomizeEnabled) {
+                    body.randomize_time = true;
+                    body.time_range_start = document.getElementById('randStartTime').value;
+                    body.time_range_end = document.getElementById('randEndTime').value;
+                    body.min_duration_hours = parseFloat(document.getElementById('randMinDur').value);
+                    body.max_duration_hours = parseFloat(document.getElementById('randMaxDur').value);
+                } else if (currentSessionMode === 'range') {
+                    body.start_time = document.getElementById('sessionStartTime').value;
+                    body.end_time = document.getElementById('sessionEndTime').value;
+                    if (!body.start_time || !body.end_time) { toast('Provide start and end times', 'error'); return; }
+                } else {
+                    body.duration = document.getElementById('sessionDuration').value;
+                    if (!body.duration) { toast('Provide a duration', 'error'); return; }
+                }
+
+                const res = await api('/api/sessions', { method: 'POST', body });
+                if (res && !res.error) {
+                    const count = res.count || 1;
+                    toast(`${count} session(s) created!`, 'success');
+                    closeSessionModal();
+                    loadToday();
+                    if (document.getElementById('historyStart').value && document.getElementById('historyEnd').value) loadHistory();
+                    if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar();
+                } else {
+                    toast(res?.error || 'Failed to save', 'error');
+                }
+            }
+        }
+
+        async function editSession(id, sessionData = null) {
+            openSessionModal(id);
+            
+            if (sessionData) {
+                document.getElementById('sessionDate').value = sessionData.date;
+                
+                if (sessionData.start_time && sessionData.end_time) {
+                    setSessionMode('range');
+                    const startDt = new Date(sessionData.start_time);
+                    const endDt = new Date(sessionData.end_time);
+                    document.getElementById('sessionStartTime').value = startDt.toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit'});
+                    document.getElementById('sessionEndTime').value = endDt.toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit'});
+                } else {
+                    setSessionMode('duration');
+                    const actSec = sessionData.total_active_seconds || 0;
+                    if (timeFormatPref === 'decimal') {
+                        const hours = (actSec / 3600).toFixed(2);
+                        document.getElementById('sessionDuration').value = parseFloat(hours).toString() + 'h';
+                    } else {
+                        const h = Math.floor(actSec / 3600);
+                        const m = Math.floor((actSec % 3600) / 60);
+                        document.getElementById('sessionDuration').value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    }
+                }
+                
+                document.getElementById('sessionProjSelect').value = sessionData.project_id || '';
+                document.getElementById('sessionCatSelect').value = sessionData.category_id || '';
+                
+                loadSessionSubcats(); 
+                
+                setTimeout(() => {
+                    document.getElementById('sessionSubSelect').value = sessionData.subcategory_id || '';
+                }, 50);
+
+                document.getElementById('sessionNotes').value = sessionData.notes || '';
+            } else {
+                toast('Edit the fields and save', 'info');
+            }
+        }
+
+        // ─── DELETE ───
+        function requestDelete(id) {
+            deletingSessionId = id;
+            document.getElementById('deleteConfirm').classList.add('open');
+        }
+
+        function cancelDelete() {
+            deletingSessionId = null;
+            document.getElementById('deleteConfirm').classList.remove('open');
+        }
+
+        async function confirmDelete() {
+            document.getElementById('deleteConfirm').classList.remove('open');
+            if (!deletingSessionId) return;
+            const res = await api(`/api/sessions/${deletingSessionId}`, { method: 'DELETE' });
+            if (res && !res.error) {
+                toast('Session deleted', 'success');
+                if (document.getElementById('sessionModal').classList.contains('open')) closeSessionModal();
+                loadToday();
+                if (document.getElementById('historyStart').value && document.getElementById('historyEnd').value) {
+                    loadHistory();
+                }
+                if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar();
+            } else {
+                toast(res?.error || 'Failed to delete', 'error');
+            }
+            deletingSessionId = null;
+        }
+
+        // ─── TABS ───
+        function switchTab(name) {
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                const tabs = ['today', 'history', 'calendar', 'totals', 'export'];
+                btn.classList.toggle('active', tabs[i] === name);
+            });
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.getElementById(`tab-${name}`).classList.add('active');
+
+            if (name === 'calendar') {
+                renderCalendar();
+            } else if (name === 'totals') {
+                loadTotals('day');
+            }
+        }
+
+        // ─── CALENDAR ───
+        function navCalendar(offsetMonths) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offsetMonths);
+            renderCalendar();
+        }
+
+        function resetCalendarToToday() {
+            currentCalendarDate = new Date();
+            renderCalendar();
+        }
+
+        async function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendarMonthTitle').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // Adjust to showing exactly 6 weeks (42 days) to cover any month start/end
+            const startPad = firstDay.getDay(); 
+            const gridStart = new Date(year, month, 1 - startPad);
+            const gridEnd = new Date(year, month, 1 - startPad + 41);
+
+            // Fetch data for the grid's range
+            const startStr = getLocalISODate(gridStart);
+            const endStr = getLocalISODate(gridEnd);
+            const data = await api(`/api/sessions/history?start=${startStr}&end=${endStr}`);
+            const sessionsByDate = {};
+            if (data && data.sessions) {
+                data.sessions.forEach(s => {
+                    if (!sessionsByDate[s.date]) sessionsByDate[s.date] = [];
+                    sessionsByDate[s.date].push(s);
+                });
+            }
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const todayStr = getLocalISODate(new Date());
+
+            for (let i = 0; i < 42; i++) {
+                const d = new Date(year, month, 1 - startPad + i);
+                const dStr = getLocalISODate(d);
+                const isCurrentMonth = d.getMonth() === month;
+                const isToday = dStr === todayStr;
+                const dailySessions = sessionsByDate[dStr] || [];
+                const isEmpty = isCurrentMonth && dailySessions.length === 0;
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                if (!isCurrentMonth) dayDiv.classList.add('other-month');
+                if (isToday) dayDiv.classList.add('today');
+                if (isEmpty && d <= new Date()) dayDiv.classList.add('empty'); // Only dim empty past days, not future days
+                
+                dayDiv.onclick = () => {
+                    if (isCurrentMonth) {
+                        openSessionModal(null, dStr);
+                        document.getElementById('sessionDate').value = dStr;
+                    }
+                };
+
+                let html = `<div class="calendar-date-label">${d.getDate()}</div>`;
+                
+                if (isEmpty && d <= new Date()) {
+                    html += `<div class="calendar-empty-indicator">No Tracking</div>`;
+                }
+
+                dailySessions.forEach(s => {
+                    const start = s.start_time ? new Date(s.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                    const titleStr = s.notes ? s.category_name + ' - ' + s.notes : s.category_name;
+                    html += `<div class="calendar-session-chip" onclick="event.stopPropagation(); editSession(${s.id}, ${JSON.stringify(s).replace(/"/g, '&quot;')})" style="border-left-color:${s.category_color}">
+                        <span class="title" title="${titleStr}">${s.category_name}</span>
+                        ${start ? `<span class="time">${start}</span>` : ''}
+                    </div>`;
+                });
+
+                dayDiv.innerHTML = html;
+                grid.appendChild(dayDiv);
+            }
+        }
+
+        // ─── EXPORT ───
+        function selectExportFormat(el) {
+            document.querySelectorAll('.export-option').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedExportFormat = el.dataset.format;
+        }
+
+        function openExportPanel() { switchTab('export'); }
+
+        async function doExport() {
+            const start = document.getElementById('exportStart').value;
+            const end = document.getElementById('exportEnd').value;
+            const projId = document.getElementById('exportProject').value;
+            const useDecimal = document.getElementById('exportDecimal').checked;
+            const preparedFor = document.getElementById('exportPreparedFor').value;
+            const isSimple = document.getElementById('exportSimple').checked;
+            if (!start || !end) { toast('Select a date range', 'error'); return; }
+            const res = await api('/api/export', { method: 'POST', body: { format: selectedExportFormat, start_date: start, end_date: end, project_id: projId, decimal_format: useDecimal, simple_format: isSimple, prepared_for: preparedFor } });
+            if (res && !res.error) {
+                toast(`${selectedExportFormat.toUpperCase()} report generated!`, 'success');
+                const a = document.createElement('a');
+                a.href = `/api/export/download/${res.filename}`;
+                a.download = res.filename;
+                a.click();
+            } else {
+                toast(res?.error || 'Export failed', 'error');
+            }
+        }
+
+        // ─── TOTALS DASHBOARD ───
+        async function loadTotals(period = 'day') {
+            const btns = document.getElementById('totalsPeriodGroup').querySelectorAll('button');
+            const periods = ['day', 'week', 'month', 'year'];
+            btns.forEach((btn, i) => btn.classList.toggle('active', periods[i] === period));
+
+            const data = await api(`/api/stats/totals?period=${period}`);
+            if (!data) return;
+
+            document.getElementById('totalsActive').textContent = formatDuration(data.total_active_seconds);
+            document.getElementById('totalsBreak').textContent = formatDuration(data.total_break_seconds);
+            document.getElementById('totalsSessions').textContent = data.total_sessions;
+
+            const breakdown = document.getElementById('totalsBreakdown');
+            const catEntries = Object.entries(data.by_category);
+            
+            if (catEntries.length === 0) {
+                breakdown.innerHTML = '<div class="empty-state" style="padding:12px;"><p>No activity in this period</p></div>';
+            } else {
+                const maxSec = Math.max(...catEntries.map(e => e[1].active_seconds));
+                breakdown.innerHTML = catEntries.sort((a, b) => b[1].active_seconds - a[1].active_seconds).map(([name, d]) => {
+                    const pct = maxSec > 0 ? (d.active_seconds / maxSec * 100) : 0;
+                    return `<div class="cat-bar-item"><span class="cat-name">${name}</span><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${d.color}"></div></div><span class="cat-time">${formatDuration(d.active_seconds)}</span></div>`;
+                }).join('');
+            }
+        }
+
+        // ─── CATEGORY MANAGEMENT ───
+        function openCategoryModal() { document.getElementById('categoryModal').classList.add('open'); renderCategoryModal(); }
+        function closeCategoryModal() { document.getElementById('categoryModal').classList.remove('open'); loadCategories(); }
+
+        async function renderCategoryModal() {
+            const cats = await api('/api/categories') || [];
+            document.getElementById('categoryManageList').innerHTML = cats.map(cat => {
+                const subs = (cat.subcategories || []).map(s =>
+                    `<div class="cat-manage-sub" id="subcat-row-${s.id}">
+                        <span id="subcat-name-${s.id}">${s.name}</span>
+                        <input type="text" id="subcat-input-${s.id}" value="${s.name}" style="display:none;font-size:0.8rem;padding:2px 4px;border:1px solid var(--border);background:var(--surface3);color:var(--text);border-radius:4px;">
+                        <span style="flex:1"></span>
+                        <button class="btn btn-ghost btn-sm" id="subcat-edit-btn-${s.id}" onclick="toggleEditSubcat(${cat.id}, ${s.id})" title="Rename"><span class="material-icons-round" style="font-size:14px;">edit</span></button>
+                        <button class="btn btn-success btn-sm" id="subcat-save-btn-${s.id}" onclick="saveSubcatRename(${cat.id}, ${s.id})" style="display:none;" title="Save"><span class="material-icons-round" style="font-size:14px;">check</span></button>
+                        ${s.is_custom ? `<button class="btn btn-danger btn-sm" onclick="deleteSubcat(${s.id})" title="Delete"><span class="material-icons-round" style="font-size:14px;">delete</span></button>` : ''}
+                     </div>`
+                ).join('');
+                return `<div>
+            <div class="cat-manage-item" id="cat-row-${cat.id}">
+                <div class="cat-dot" style="width:10px;height:10px;border-radius:50%;background:${cat.color || 'var(--primary)'};flex-shrink:0;"></div>
+                <span class="cat-manage-name" id="cat-name-${cat.id}">${cat.name}</span>
+                <input type="text" id="cat-input-${cat.id}" value="${cat.name}" style="display:none;font-size:0.85rem;padding:4px 6px;border:1px solid var(--border);background:var(--surface3);color:var(--text);border-radius:4px;">
+                <span class="cat-manage-type">${cat.is_custom ? 'Custom' : 'Core'}</span>
+                
+                <button class="btn btn-ghost btn-sm" id="cat-edit-btn-${cat.id}" onclick="toggleEditCat(${cat.id})" title="Rename"><span class="material-icons-round" style="font-size:16px;">edit</span></button>
+                <button class="btn btn-success btn-sm" id="cat-save-btn-${cat.id}" onclick="saveCatRename(${cat.id})" style="display:none;" title="Save"><span class="material-icons-round" style="font-size:16px;">check</span></button>
+                
+                ${cat.is_custom ? `<button class="btn btn-danger btn-sm" onclick="deleteCat(${cat.id})">Delete</button>` : ''}
+                <button class="btn btn-ghost btn-sm" onclick="promptSubcat(${cat.id})">+ Sub</button>
+            </div>
+            ${subs ? '<div class="cat-manage-subs">' + subs + '</div>' : ''}
+        </div>`;
+            }).join('');
+        }
+
+        function toggleEditCat(id) {
+            document.getElementById(`cat-name-${id}`).style.display = 'none';
+            const input = document.getElementById(`cat-input-${id}`);
+            input.style.display = 'inline-block';
+            input.focus();
+            document.getElementById(`cat-edit-btn-${id}`).style.display = 'none';
+            document.getElementById(`cat-save-btn-${id}`).style.display = 'inline-block';
+        }
+
+        async function saveCatRename(id) {
+            const name = document.getElementById(`cat-input-${id}`).value.trim();
+            if (!name) { toast('Name cannot be empty', 'error'); return; }
+            const res = await api(`/api/categories/${id}`, { method: 'PUT', body: { name } });
+            if (res && !res.error) {
+                toast('Category renamed', 'success');
+                renderCategoryModal();
+                loadCategories();
+            } else {
+                toast(res?.error || 'Failed to rename', 'error');
+            }
+        }
+
+        function toggleEditSubcat(catId, subId) {
+            document.getElementById(`subcat-name-${subId}`).style.display = 'none';
+            const input = document.getElementById(`subcat-input-${subId}`);
+            input.style.display = 'inline-block';
+            input.focus();
+            document.getElementById(`subcat-edit-btn-${subId}`).style.display = 'none';
+            document.getElementById(`subcat-save-btn-${subId}`).style.display = 'inline-block';
+        }
+
+        async function saveSubcatRename(catId, subId) {
+            const name = document.getElementById(`subcat-input-${subId}`).value.trim();
+            if (!name) { toast('Name cannot be empty', 'error'); return; }
+            const res = await api(`/api/categories/${catId}/subcategories/${subId}`, { method: 'PUT', body: { name } });
+            if (res && !res.error) {
+                toast('Subcategory renamed', 'success');
+                renderCategoryModal();
+                loadCategories();
+            } else {
+                toast(res?.error || 'Failed to rename', 'error');
+            }
+        }
+
+        async function addNewCategory() {
+            const input = document.getElementById('newCategoryName');
+            const name = input.value.trim();
+            if (!name) return;
+            const res = await api('/api/categories', { method: 'POST', body: { name } });
+            if (res && !res.error) { toast(`Category "${name}" added`, 'success'); input.value = ''; renderCategoryModal(); }
+            else { toast(res?.error || 'Failed', 'error'); }
+        }
+
+        async function deleteCat(id) {
+            await api(`/api/categories/${id}`, { method: 'DELETE' });
+            toast('Category deleted', 'success');
+            renderCategoryModal();
+        }
+
+        async function promptSubcat(catId) {
+            const name = prompt('New subcategory name:');
+            if (!name || !name.trim()) return;
+            const res = await api(`/api/categories/${catId}/subcategories`, { method: 'POST', body: { name: name.trim() } });
+            if (res && !res.error) { toast('Subcategory added', 'success'); renderCategoryModal(); }
+        }
+
+        async function deleteSubcat(id) {
+            if (!confirm('Are you sure you want to delete this subcategory?')) return;
+            const res = await api(`/api/subcategories/${id}`, { method: 'DELETE' });
+            if (res && !res.error) {
+                toast('Subcategory deleted', 'success');
+                renderCategoryModal();
+                loadCategories();
+            } else {
+                toast(res?.error || 'Failed to delete', 'error');
+            }
+        }
+
+        // ─── PROJECT MANAGEMENT ───
+        function openProjectModal() { document.getElementById('projectModal').classList.add('open'); renderProjectModal(); }
+        function closeProjectModal() { document.getElementById('projectModal').classList.remove('open'); loadProjects(); }
+
+        async function renderProjectModal() {
+            const projs = await api('/api/projects') || [];
+            document.getElementById('projectManageList').innerHTML = projs.map(p => `
+                <div class="cat-manage-item" id="proj-row-${p.id}">
+                    <span class="cat-manage-name" id="proj-name-${p.id}">${p.name}</span>
+                    <input type="text" id="proj-input-${p.id}" value="${p.name}" style="display:none;font-size:0.85rem;padding:4px 6px;border:1px solid var(--border);background:var(--surface3);color:var(--text);border-radius:4px;">
+                    <span style="flex:1"></span>
+                    <button class="btn btn-ghost btn-sm" id="proj-edit-btn-${p.id}" onclick="toggleEditProj(${p.id})" title="Rename"><span class="material-icons-round" style="font-size:16px;">edit</span></button>
+                    <button class="btn btn-success btn-sm" id="proj-save-btn-${p.id}" onclick="saveProjRename(${p.id})" style="display:none;" title="Save"><span class="material-icons-round" style="font-size:16px;">check</span></button>
+                    ${p.id !== 1 ? `<button class="btn btn-danger btn-sm" onclick="deleteProj(${p.id})">Delete</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function addNewProject() {
+            const input = document.getElementById('newProjectName');
+            const name = input.value.trim();
+            if (!name) return;
+            const res = await api('/api/projects', { method: 'POST', body: { name } });
+            if (res && !res.error) { toast(`Project "${name}" added`, 'success'); input.value = ''; renderProjectModal(); }
+            else { toast(res?.error || 'Failed', 'error'); }
+        }
+
+        async function deleteProj(id) {
+            await api(`/api/projects/${id}`, { method: 'DELETE' });
+            toast('Project deleted', 'success');
+            renderProjectModal();
+        }
+
+        function toggleEditProj(id) {
+            document.getElementById(`proj-name-${id}`).style.display = 'none';
+            const input = document.getElementById(`proj-input-${id}`);
+            input.style.display = 'inline-block';
+            input.focus();
+            document.getElementById(`proj-edit-btn-${id}`).style.display = 'none';
+            document.getElementById(`proj-save-btn-${id}`).style.display = 'inline-block';
+        }
+
+        async function saveProjRename(id) {
+            const name = document.getElementById(`proj-input-${id}`).value.trim();
+            if (!name) { toast('Name cannot be empty', 'error'); return; }
+            const res = await api(`/api/projects/${id}`, { method: 'PUT', body: { name } });
+            if (res && !res.error) {
+                toast('Project renamed', 'success');
+                renderProjectModal();
+                loadProjects();
+            } else {
+                toast(res?.error || 'Failed to rename', 'error');
+            }
+        }
+        
+        // ─── SETTINGS & PROGRESS RING ───
+        async function loadSettings() {
+            const settings = await api('/api/settings');
+            if (settings) {
+                if (settings.daily_target_hours) {
+                    dailyTargetHours = parseFloat(settings.daily_target_hours);
+                    document.getElementById('dailyTargetInput').value = dailyTargetHours;
+                }
+                if (settings.time_format) {
+                    timeFormatPref = settings.time_format === 'decimal' ? 'decimal' : 'normal';
+                    document.getElementById('timeFormatLabel').textContent = timeFormatPref === 'normal' ? '12:30' : '12.5h';
+                }
+            }
+        }
+
+        async function saveDailyTarget() {
+            dailyTargetHours = parseFloat(document.getElementById('dailyTargetInput').value) || 9.0;
+            await api('/api/settings', { method: 'POST', body: { daily_target_hours: dailyTargetHours.toString() } });
+            toast(`Daily target set to ${dailyTargetHours}h`, 'success');
+            updateProgressRing();
+        }
+
+        function updateProgressRing(activeSeconds = null) {
+            if (activeSeconds === null) {
+                // Read from the stat display
+                const statEl = document.getElementById('statActive');
+                const text = statEl ? statEl.textContent : '00:00';
+                const parts = text.split(':').map(Number);
+                if (parts.length === 3) activeSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                else if (parts.length === 2) activeSeconds = parts[0] * 60 + parts[1];
+                else activeSeconds = 0;
+            }
+
+            const targetSec = dailyTargetHours * 3600;
+            const pct = Math.min(100, (activeSeconds / targetSec) * 100);
+            const remSec = Math.max(0, targetSec - activeSeconds);
+
+            // Update ring fill (conic gradient)
+            const fill = document.getElementById('progressRingFill');
+            const color = pct >= 100 ? 'var(--green)' : pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--orange)';
+            fill.style.background = `conic-gradient(${color} 0% ${pct}%, var(--surface3) ${pct}% 100%)`;
+
+            // Update text
+            document.getElementById('progressPct').textContent = `${Math.round(pct)}%`;
+            document.getElementById('progressPct').style.color = color;
+
+            const wH = Math.floor(activeSeconds / 3600);
+            const wM = Math.floor((activeSeconds % 3600) / 60);
+            document.getElementById('progressWorked').textContent = `${wH}h ${wM}m `;
+
+            const rH = Math.floor(remSec / 3600);
+            const rM = Math.floor((remSec % 3600) / 60);
+            document.getElementById('progressRemaining').textContent = `${rH}h ${rM}m `;
+        }
+
+        // ─── INIT ───
+        async function init() {
+            const today = getLocalISODate(new Date());
+            const weekAgo = getLocalISODate(new Date(Date.now() - 7 * 86400000));
+            
+            document.getElementById('historyStart').value = weekAgo;
+            document.getElementById('historyEnd').value = today;
+            document.getElementById('exportStart').value = weekAgo;
+            document.getElementById('exportEnd').value = today;
+
+            // Restore theme
+            const savedTheme = localStorage.getItem('devtracker-theme');
+            if (savedTheme) {
+                document.documentElement.dataset.theme = savedTheme;
+                document.getElementById('themeIcon').textContent = savedTheme === 'light' ? 'dark_mode' : 'light_mode';
+            }
+
+            await loadSettings();
+            await loadProjects();
+            await loadCategories();
+            await loadToday();
+
+            const status = await api('/api/timer/status');
+            if (status && status.running) startPolling();
+
+            updateProgressRing();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

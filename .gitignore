@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# SQLite database (persisted via Docker volume, no need to commit)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Exported reports
+exports/*.xlsx
+exports/*.pdf
+exports/*.docx
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Virtual env
+venv/
+.venv/
