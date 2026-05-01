@@ -1575,6 +1575,27 @@
                         </div>
                     </div>
                     
+                    <div id="totalsComparisonBox" style="background:var(--surface2);border-radius:var(--radius-lg);padding:20px;margin-bottom:24px;border:1px solid var(--border);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <h4 style="font-size:.9rem;font-weight:600;color:var(--text-dim);">Spent vs Target</h4>
+                            <div style="font-size:.8rem;color:var(--text-muted);" id="totalsWorkdays">0 workdays</div>
+                        </div>
+                        <div style="height:12px;background:var(--surface3);border-radius:6px;overflow:hidden;margin-bottom:12px;position:relative;">
+                            <div id="totalsTargetBar" style="height:100%;width:0%;background:linear-gradient(90deg, var(--primary), var(--green));transition:width .5s ease;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                            <div>
+                                <span id="totalsSpentVal" style="font-size:1.4rem;font-weight:700;color:var(--green);">00:00</span>
+                                <span style="font-size:.85rem;color:var(--text-dim);margin-left:4px;">spent</span>
+                            </div>
+                            <div style="text-align:right;">
+                                <span id="totalsTargetVal" style="font-size:1.1rem;font-weight:600;color:var(--text-dim);">00:00</span>
+                                <span style="font-size:.8rem;color:var(--text-muted);margin-left:4px;">target</span>
+                            </div>
+                        </div>
+                        <div id="totalsStatusMsg" style="font-size:.8rem;margin-top:10px;color:var(--text-dim);font-weight:500;"></div>
+                    </div>
+
                     <h4 style="font-size:.95rem;font-weight:600;margin-bottom:12px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:8px;">Category Breakdown</h4>
                     <div class="category-bar" id="totalsBreakdown">
                         <div class="empty-state" style="padding:12px;"><p>No data</p></div>
@@ -1650,6 +1671,19 @@
                         <label>Target:</label>
                         <input type="number" id="dailyTargetInput" value="9" min="1" max="24" step="0.5" onchange="saveDailyTarget()">
                         <label>hours</label>
+                    </div>
+                    <div class="target-edit-row" style="margin-top:10px;">
+                        <label>Country:</label>
+                        <select id="countrySelect" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:6px;font-size:.8rem;font-weight:600;width:120px;" onchange="saveCountry()">
+                            <option value="ZA">South Africa</option>
+                            <option value="US">USA</option>
+                            <option value="GB">UK</option>
+                            <option value="AU">Australia</option>
+                            <option value="CA">Canada</option>
+                            <option value="DE">Germany</option>
+                            <option value="FR">France</option>
+                            <option value="IN">India</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -2720,6 +2754,24 @@
             document.getElementById('totalsBreak').textContent = formatDuration(data.total_break_seconds);
             document.getElementById('totalsSessions').textContent = data.total_sessions;
 
+            // Update comparison box
+            const spentSec = data.total_active_seconds || 0;
+            const targetSec = data.target_seconds || 0;
+            const pct = targetSec > 0 ? Math.min(100, (spentSec / targetSec) * 100) : 0;
+            
+            document.getElementById('totalsWorkdays').textContent = `${data.workdays} working days`;
+            document.getElementById('totalsSpentVal').textContent = formatDuration(spentSec);
+            document.getElementById('totalsTargetVal').textContent = formatDuration(targetSec);
+            document.getElementById('totalsTargetBar').style.width = `${pct}%`;
+            
+            const diff = spentSec - targetSec;
+            const statusMsg = document.getElementById('totalsStatusMsg');
+            if (diff >= 0) {
+                statusMsg.innerHTML = `<span style="color:var(--green)">★ Goal achieved!</span> You exceeded the target by ${formatDuration(diff)}.`;
+            } else {
+                statusMsg.innerHTML = `You are ${formatDuration(Math.abs(diff))} behind the target for this period.`;
+            }
+
             const breakdown = document.getElementById('totalsBreakdown');
             const catEntries = Object.entries(data.by_category);
             
@@ -2910,10 +2962,24 @@
                     dailyTargetHours = parseFloat(settings.daily_target_hours);
                     document.getElementById('dailyTargetInput').value = dailyTargetHours;
                 }
+                if (settings.country_code) {
+                    document.getElementById('countrySelect').value = settings.country_code;
+                }
                 if (settings.time_format) {
                     timeFormatPref = settings.time_format === 'decimal' ? 'decimal' : 'normal';
                     document.getElementById('timeFormatLabel').textContent = timeFormatPref === 'normal' ? '12:30' : '12.5h';
                 }
+            }
+        }
+
+        async function saveCountry() {
+            const code = document.getElementById('countrySelect').value;
+            await api('/api/settings', { method: 'POST', body: { country_code: code } });
+            toast(`Holidays set for ${document.getElementById('countrySelect').options[document.getElementById('countrySelect').selectedIndex].text}`, 'success');
+            // Refresh totals if tab is active
+            if (document.getElementById('tab-totals').classList.contains('active')) {
+                const activeBtn = document.querySelector('#totalsPeriodGroup button.active');
+                if (activeBtn) loadTotals(activeBtn.textContent.toLowerCase());
             }
         }
 

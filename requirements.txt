@@ -4,3 +4,4 @@ prompt-toolkit==3.0.48
 openpyxl==3.1.5
 reportlab==4.2.5
 python-docx==1.1.2
+holidays==0.48

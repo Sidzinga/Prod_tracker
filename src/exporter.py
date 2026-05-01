@@ -134,7 +134,7 @@ def export_excel(start_date: str, end_date: str, project_id: str = "all", decima
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
     _ensure_exports_dir()
-    data = _build_report_data(start_date, end_date, project_id, simple_format)
+    data = _build_report_data(start_date, end_date, project_id, simple_format, prepared_for)
     wb = Workbook()
 
     header_font = Font(name="Calibri", bold=True, size=12, color="FFFFFF")
@@ -153,8 +153,11 @@ def export_excel(start_date: str, end_date: str, project_id: str = "all", decima
     ws.title = "Report"
     
     if simple_format:
-        # No totals, date first
-        start_row = 1
+        # Name at top and space
+        ws["A1"] = prepared_for or "Productivity Report"
+        ws["A1"].font = title_font
+        
+        start_row = 4
         headers = ["Date", "Project", "Description", "Detailed Description", "Time(hours)"]
         for i, h in enumerate(headers, 1):
             cell = ws.cell(row=start_row, column=i, value=h)
@@ -197,15 +200,11 @@ def export_excel(start_date: str, end_date: str, project_id: str = "all", decima
     else:
         # Standard format with totals
         ws.merge_cells("A1:G1")
-        ws["A1"] = "Productivity Report"
+        ws["A1"] = prepared_for or "Productivity Report"
         ws["A1"].font = title_font
 
-        ws.merge_cells("A2:G2")
-        subtitle = f"{start_date} to {end_date} | Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        if prepared_for:
-            subtitle = f"Prepared for: {prepared_for} | {subtitle}"
-        ws["A2"] = subtitle
-        ws["A2"].font = subtitle_font
+        # Skip subtitle/other titles as requested
+
 
         ws["A4"] = "Total Active Time"
         ws["B4"] = _format_time(data["total_active"], decimal_format)
@@ -297,7 +296,7 @@ def export_pdf(start_date: str, end_date: str, project_id: str = "all", decimal_
     from reportlab.lib.enums import TA_CENTER
 
     _ensure_exports_dir()
-    data = _build_report_data(start_date, end_date, project_id, simple_format)
+    data = _build_report_data(start_date, end_date, project_id, simple_format, prepared_for)
 
     filename = f"report_{start_date}_to_{end_date}.pdf"
     filepath = os.path.join(EXPORTS_DIR, filename)
@@ -330,13 +329,10 @@ def export_pdf(start_date: str, end_date: str, project_id: str = "all", decimal_
 
     # Title & Totals only for standard format
     if not simple_format:
-        elements.append(Paragraph("Productivity Report", title_style))
-        subtitle_text = f"{start_date} to {end_date} &nbsp;|&nbsp; Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-        if prepared_for:
-            subtitle_text = f"Prepared for: {prepared_for} &nbsp;|&nbsp; {subtitle_text}"
-        elements.append(Paragraph(subtitle_text, subtitle_style))
-        elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#2F5496")))
-        elements.append(Spacer(1, 12))
+        elements.append(Paragraph(prepared_for or "Productivity Report", title_style))
+        elements.append(Spacer(1, 24))
+        # Excluded other titles/subtitles
+
 
         # Overview stats
         overview_data = [
@@ -358,8 +354,9 @@ def export_pdf(start_date: str, end_date: str, project_id: str = "all", decimal_
 
     # Main Table
     if simple_format:
-        elements.append(Paragraph("Productivity Report (Simple)", title_style))
-        elements.append(Paragraph(f"{start_date} to {end_date}", subtitle_style))
+        elements.append(Paragraph(prepared_for or "Productivity Report", title_style))
+        elements.append(Spacer(1, 24))
+
         
         headers = ["Date", "Project", "Description", "Detailed Description", "Time(hours)"]
         table_rows = [headers]
@@ -390,10 +387,8 @@ def export_pdf(start_date: str, end_date: str, project_id: str = "all", decimal_
             row_idx += 1
 
     else:
-        elements.append(KeepTogether([
-            Paragraph("Time by Project & Description", heading_style),
-            Spacer(1, 4)
-        ]))
+        elements.append(Spacer(1, 4))
+
         
         headers = ["Project / Description / Date", "Start", "End", "Subcat.", "Active", "Break", "Detailed Description"]
         table_rows = [headers]
@@ -481,7 +476,7 @@ def export_word(start_date: str, end_date: str, project_id: str = "all", decimal
     from docx.enum.section import WD_ORIENT
 
     _ensure_exports_dir()
-    data = _build_report_data(start_date, end_date, project_id, simple_format)
+    data = _build_report_data(start_date, end_date, project_id, simple_format, prepared_for)
 
     doc = Document()
 
@@ -498,23 +493,16 @@ def export_word(start_date: str, end_date: str, project_id: str = "all", decimal
     style.font.size = Pt(10)
 
     # Title
-    title = doc.add_heading("Productivity Report", level=0)
+    title = doc.add_heading(prepared_for or "Productivity Report", level=0)
     title.runs[0].font.color.rgb = RGBColor(0x2F, 0x54, 0x96)
 
-    subtitle = doc.add_paragraph()
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    subtitle_text = f"{start_date} to {end_date}  |  Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-    if prepared_for:
-        subtitle_text = f"Prepared for: {prepared_for}  |  {subtitle_text}"
-    run = subtitle.add_run(subtitle_text)
-    run.font.size = Pt(11)
-    run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+    doc.add_paragraph() # Space
 
-    doc.add_paragraph()
 
     # Totals only for standard
     if not simple_format:
-        doc.add_heading("Overview", level=1)
+        # Overview stats table follows
+
         overview_table = doc.add_table(rows=3, cols=2)
         overview_data = [
             ("Total Active Time:", _format_time(data["total_active"], decimal_format)),
@@ -530,7 +518,7 @@ def export_word(start_date: str, end_date: str, project_id: str = "all", decimal
 
     # Main Table
     if simple_format:
-        doc.add_heading("Simple Session Log", level=1)
+
         headers = ["Date", "Project", "Description", "Detailed Description", "Time(hours)"]
         main_table = doc.add_table(rows=1 + len(data["simple_sessions"]), cols=len(headers))
         main_table.style = "Light Grid Accent 1"
@@ -563,7 +551,7 @@ def export_word(start_date: str, end_date: str, project_id: str = "all", decimal
             row_idx += 1
 
     else:
-        doc.add_heading("Time by Project & Description", level=1)
+
         headers = ["Project / Description / Date", "Start", "End", "Subcat.", "Active", "Break", "Detailed Description"]
         
         num_rows = 1

@@ -7,6 +7,7 @@ import os
 import json
 import random
 from datetime import datetime, timedelta
+import holidays
 from flask import Flask, jsonify, request, send_from_directory, send_file
 
 from .database import initialize_db, db_session, get_connection
@@ -331,11 +332,47 @@ def sessions_history():
         "total_sessions": len(sessions),
     })
 
+def get_working_days(start_date_str, end_date_str, country_code='US'):
+    """Calculate number of Mon-Fri workdays between two dates (inclusive), excluding public holidays."""
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        
+        # Get holidays for the relevant years
+        years = list(range(start_date.year, end_date.year + 1))
+        try:
+            country_holidays = holidays.CountryHoliday(country_code, years=years)
+        except Exception:
+            # Fallback to US if invalid country code
+            country_holidays = holidays.CountryHoliday('US', years=years)
+            
+        days = 0
+        curr = start_date
+        while curr <= end_date:
+            # Check if it's a weekday AND NOT a holiday
+            # weekday() 0-4 is Mon-Fri
+            if curr.weekday() < 5 and curr.date() not in country_holidays:
+                days += 1
+            curr += timedelta(days=1)
+        return days
+    except Exception:
+        return 0
+
+
 @app.route("/api/stats/totals")
 def stats_totals():
     period = request.args.get("period", "day")
     now = datetime.now()
     
+    # Get settings
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT key, value FROM settings")
+        settings = {row["key"]: row["value"] for row in cursor.fetchall()}
+        
+    daily_target = float(settings.get("daily_target_hours", 9.0))
+    country_code = settings.get("country_code", "US")
+
     if period == "day":
         start_date = now.strftime("%Y-%m-%d")
         end_date = start_date
@@ -374,6 +411,10 @@ def stats_totals():
         total_active += s["total_active_seconds"] or 0
         total_break += s["total_break_seconds"] or 0
 
+    # Calculate target
+    workdays = get_working_days(start_date, end_date, country_code)
+    target_seconds = workdays * daily_target * 3600
+
     return jsonify({
         "period": period,
         "start_date": start_date,
@@ -383,6 +424,9 @@ def stats_totals():
         "total_break_seconds": total_break,
         "total_break_formatted": format_duration(total_break),
         "total_sessions": len(sessions),
+        "target_seconds": target_seconds,
+        "target_formatted": format_duration(target_seconds),
+        "workdays": workdays,
         "by_category": by_category
     })
 
